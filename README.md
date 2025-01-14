@@ -1,1 +1,1 @@
-# конвертация для станка
+# conversion of machine component names
