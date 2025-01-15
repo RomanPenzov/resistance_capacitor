@@ -1,8 +1,14 @@
 import pandas as pd
 import os
 import re
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+
+# Укажите путь к вашему CSV-файлу
+base_dir = r"C:\MGU_LAB\res_cap\test"
+file_name = "Interface_1k-top-pos_old.csv"
+file_path = os.path.join(base_dir, file_name)
+
+# Чтение файла CSV
+data = pd.read_csv(file_path)
 
 # Функция для обновления значений в столбце 'Val' в зависимости от 'Package'
 def update_val(row):
@@ -31,6 +37,22 @@ def update_val(row):
     
     return val
 
+# Применяем функцию к каждому ряду
+data['Val'] = data.apply(update_val, axis=1)
+
+# Укажите путь для сохранения нового файла
+temp_file = "temp.csv"
+temp_file_path = os.path.join(base_dir, temp_file)
+
+# Сохранение изменений в новый файл
+data.to_csv(temp_file_path, index=False)
+
+print(f"The processed temp_file is saved in {temp_file_path}")
+
+# Загрузка файла
+file_path = os.path.join(base_dir, temp_file)
+data = pd.read_csv(file_path)
+
 # Функция для преобразования значений в столбце Package
 def transform_package(value):
     match = re.match(r'([RC])_(\d{4})_\d{4}Metric', value)
@@ -40,36 +62,13 @@ def transform_package(value):
         return f"{prefix}{size}"
     return value  # Если значение не подходит под шаблон, оставить без изменений
 
-def main():
-    # Открытие диалогового окна выбора файла
-    root = Tk()
-    root.withdraw()  # Скрыть главное окно Tkinter
-    file_path = askopenfilename(
-        title="Select a CSV file to process",
-        filetypes=[("CSV files", "*.csv")],
-    )
+# Применение функции ко всем значениям в столбце Package
+data['Package'] = data['Package'].apply(transform_package)
 
-    if not file_path:
-        print("No file was selected. Terminating program.")
-        return
+# Сохранение изменений в новый файл
+new_file_name = "Interface_1k-top-pos_Transformed.csv"
+output_file_path = os.path.join(base_dir, new_file_name)
 
-    # Чтение файла CSV
-    data = pd.read_csv(file_path)
+data.to_csv(output_file_path, index=False)
 
-    # Применение обработки значений столбца 'Val'
-    data['Val'] = data.apply(update_val, axis=1)
-
-    # Применение обработки значений столбца 'Package'
-    data['Package'] = data['Package'].apply(transform_package)
-
-    # Формирование пути для сохранения нового файла
-    base_dir, original_name = os.path.split(file_path)
-    new_file_name = os.path.splitext(original_name)[0] + "_Transformed.csv"
-    output_file_path = os.path.join(base_dir, new_file_name)
-
-    # Сохранение результата в новый файл
-    data.to_csv(output_file_path, index=False)
-    print(f"Processing completed. Result saved in: {output_file_path}")
-
-if __name__ == "__main__":
-    main()
+print(f"The processed file is saved in {output_file_path}")
