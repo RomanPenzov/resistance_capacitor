@@ -40,6 +40,34 @@ def transform_package(value):
         return f"{prefix}{size}"
     return value  # Если значение не подходит под шаблон, оставить без изменений
 
+def replace_value(value):
+    replacements = [
+        (r'^D_SMA', 'SMA'),
+        #(r'^LED_\d{4}', lambda m: m.group(0).split('_')[0]),
+        (r'^LED_\d{4}', lambda m: m.group(0)),
+        (r'^Crystal_SMD_HC49-SD', 'HC49SM'),
+        (r'^SOT-89-3', 'SOT-89'),
+        (r'^L_\d{4}', lambda m: 'IND' + m.group(0).split('_')[1]),
+        (r'^LQFP-48_', 'LQFP-48'),
+        (r'^SOT-353_SC-70-5', 'SOT-353'),
+        (r'^SOP-16_', 'SOP-16'),
+        (r'^SOT-252-2', 'DPAK'),
+        (r'^SOIC-8_', 'SO8'),
+        (r'^DX-BT18', 'SOIC-16W'),
+        (r'^SOIC-20W', 'so-20'),
+        (r'^Wide_SOIC-8', 'SO8-veryWIDE'),
+        (r'^wide_SOIC-8', 'SO8-veryWIDE'),
+        (r'^Transformer_TSHT5\.8-01', 'tsht5_8_01'),
+        (r'^CP_EIA-6032-28_Keme', 'C-type'),
+    ] 
+
+    for pattern, replacement in replacements:
+        match = re.match(pattern, value)
+        if match:
+            return replacement(match) if callable(replacement) else replacement
+
+    return value
+
 def main():
     # Открытие диалогового окна выбора файла
     root = Tk()
@@ -59,8 +87,13 @@ def main():
     # Применение обработки значений столбца 'Val'
     data['Val'] = data.apply(update_val, axis=1)
 
-    # Применение обработки значений столбца 'Package'
+    # Применение обработки значений столбца 'Package' по компонентам RES и CAP
     data['Package'] = data['Package'].apply(transform_package)
+    
+    # Применение обработки значений столбца 'Package' по ДРУГИМ компонентам (кроме RES и CAP)
+    data['Package'] = data['Package'].apply(replace_value)
+    
+    
 
     # Формирование пути для сохранения нового файла
     base_dir, original_name = os.path.split(file_path)
